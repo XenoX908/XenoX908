@@ -1,0 +1,609 @@
+--[[
+████████╗██╗  ██╗██╗███╗   ██╗██╗  ██╗    ██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
+╚══██╔══╝██║  ██║██║████╗  ██║██║  ██║    ██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
+   ██║   ███████║██║██╔██╗ ██║███████║    ███████║███████║██║     █████╔╝ █████╗  ██████╔╝
+   ██║   ██╔══██║██║██║╚██╗██║██╔══██║    ██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
+   ██║   ██║  ██║██║██║ ╚████║██║  ██║    ██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║
+   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝    ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+]]--                                                                                        
+repeat wait() until game:IsLoaded()
+
+--=======\Variables\
+local Players = game:GetService("Players");     
+local Lighting = game:GetService("Lighting");
+local ReplicatedStorage = game:GetService("ReplicatedStorage");
+local CoreGui = game:GetService("CoreGui");
+local ScriptContext = game:GetService("ScriptContext");
+local VRService = game:GetService("VRService");
+local VirtualUser = game:GetService("VirtualUser");
+local RunService = game:GetService("RunService");
+local HttpService = game:GetService("HttpService");
+local UserInputService = game:GetService("UserInputService");
+local MarketplaceService = game:GetService("MarketplaceService");
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local CurrentCamera = workspace.CurrentCamera;
+
+local LocalPlayer = Players.LocalPlayer;
+local PlayerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+local Mouse = LocalPlayer:GetMouse();
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait(); 
+
+local inGroup = LocalPlayer:IsInGroup(2726951) and true or false
+local VIP = MarketplaceService:UserOwnsGamePassAsync(LocalPlayer.UserId, 2465866) and true or false
+
+local VehicleInformation = ReplicatedStorage:FindFirstChild("VehicleInformation");
+local HelicopterContainer = ReplicatedStorage:FindFirstChild("HelicopterContainer")
+local CarCollection = workspace:FindFirstChild("CarCollection");
+local rF = ReplicatedStorage:FindFirstChild("rF");
+local rE = ReplicatedStorage:FindFirstChild("rE");
+
+--\Libraries\
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/saucekid/UI-Libraries/main/NotificationLib.lua"))()
+function err(txt)
+    Notification.Notify("Thong Bao", txt, "rbxassetid://1491260682", {
+        Duration = 3,
+        TitleSettings = {
+            BackgroundColor3 = Color3.fromRGB(200, 200 , 200),
+            TextColor3 = Color3.fromRGB(255, 0, 0),
+            TextScaled = true,
+            TextWrapped = true,
+            TextSize = 14,
+            Font = Enum.Font.SourceSansBold,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Center
+        },
+        DescriptionSettings = {
+            BackgroundColor3 = Color3.fromRGB(200, 200 ,200),
+            TextColor3 = Color3.fromRGB(240, 240, 240),
+            TextScaled = true,
+            TextWrapped = true,
+            TextSize = 14,
+            Font = Enum.Font.SourceSansBold,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+        },
+        IconSettings = {
+            BackgroundTransparency = 1,
+            BackgroundColor3 = Color3.fromRGB(255, 255, 255),               
+        },
+        GradientSettings = {
+            GradientEnabled = false,
+            SolidColorEnabled = true,
+            SolidColor = Color3.fromRGB(255,0,0),
+            Retract = true,
+            Extend = false,
+        },
+        Main = {
+            BorderColor3 = Color3.fromRGB(255, 0, 0),
+            BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+            BackgroundTransparency = 0.05,
+            Rounding = false,
+            BorderSizePixel = 1
+        }
+    })
+end
+
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/saucekid/UI-Libraries/main/hub-lib.lua"))()
+library.theme = {
+    fontsize = 15,
+    font = Enum.Font.Code,
+    background = "rbxassetid://0",
+    backgroundcolor = Color3.fromRGB(20, 20, 20),
+    tabstextcolor = Color3.fromRGB(230, 230, 230),
+    bordercolor = Color3.fromRGB(60, 60, 60),
+    accentcolor = Color3.fromRGB(160,32,240),
+    accentcolor2 = Color3.fromRGB(255, 255, 255),
+    outlinecolor = Color3.fromRGB(60, 60, 60),
+    outlinecolor2 = Color3.fromRGB(0, 0, 0),
+    sectorcolor = Color3.fromRGB(30, 30, 30),
+    toptextcolor = Color3.fromRGB(255, 255, 255),
+    topheight = 48,
+    topcolor = Color3.fromRGB(30, 30, 30),
+    topcolor2 = Color3.fromRGB(30, 30, 30), -- Color3.fromRGB(12, 12, 12),
+    buttoncolor = Color3.fromRGB(49, 49, 49),
+    buttoncolor2 = Color3.fromRGB(39, 39, 39),
+    itemscolor = Color3.fromRGB(170, 170, 170),
+    itemscolor2 = Color3.fromRGB(200, 200, 200)
+}
+
+if not CarCollection or not rF or not rE then return err("He Thong Deteted: Khong Phai Car Crusher 2") else Notification.Notify("Car Crushers 2", "made by saucekid", Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)); wait(1) end -- check
+
+if ReplicatedStorage:FindFirstChild("ClientError") then
+    ReplicatedStorage.ClientError:Destroy() -- remove error logging to game devs
+end
+
+--\Toggles\
+flags = {
+    invincible = {},
+    autofarm = {},
+    silent = {},
+    autoescape = {},
+    tweentp = {},
+    flying = {},
+    jump = {},
+    carspeed = {value = 0},
+    tweenspeed = {value = 500},
+    boostspeed = {value = 100},
+    vflyspeed = {value = 1},
+    jumppower = {value = 10},
+    bodypaint = {value = "Gold"}
+}
+
+for _,flag in pairs(flags) do 
+    if not flag["value"] then flag.value = false end
+    setmetatable(flag, { -- im pro
+        __call = function(self, b)
+            self.value = b
+        end
+    })
+end
+
+--=======\Functions\
+function getCar()
+    return CarCollection:FindFirstChild(LocalPlayer.Name) and CarCollection[LocalPlayer.Name].Car or false
+end
+
+function getbestCar(realname)
+    local bestName = ""
+    local bestPrice = 0
+    for _, car in pairs(VehicleInformation:GetChildren()) do
+        if not VIP and car.VipOnly.Value == true then continue end
+        if not inGroup and car.GroupOnly.Value == true then continue end
+        local name = realname and car:FindFirstChild("Name").Value or car.Name
+        local price = car.Price.Value
+        if price >= bestPrice and price <= LocalPlayer.Money.Value and car.TokenRequirement.Value <= LocalPlayer.leaderstats.Tokens.Value then
+            bestName = name
+            bestPrice = price
+        end
+    end
+    return bestName
+end
+
+function spawnCar()
+    local bestCar = getbestCar()
+    rF.SpawnVehicle:InvokeServer(bestCar)
+end
+
+function bringCar()
+    car = getCar()
+    if not car then return err("Chua co xe") end
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return err("you are dead") end
+    car.PrimaryPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+end
+
+function boost()
+    car = getCar()
+    if not car then return err("Vui long ngoi trong xe") end
+    for i = 1,50 do
+        RunService.Stepped:Wait()
+        car.PrimaryPart.Velocity = CFrame.new(car.PrimaryPart.Velocity):Lerp(CFrame.new(-car.PrimaryPart.CFrame.lookVector*(car.PrimaryPart.Velocity.Magnitude/70)*flags.boostspeed.value), 0.02).Position
+    end
+end
+
+function jump()
+    if not flags.jump.value then return end
+    car = getCar()
+    if not car then return end
+    car.PrimaryPart.Velocity = Vector3.new(car.PrimaryPart.Velocity.X,flags.jumppower.value*10,car.PrimaryPart.Velocity.Z)
+end
+
+function destroyCar()
+    car = getCar()
+    if not car then return err("VIET HOA BY THINHCT") end
+    for i = 1,5 do
+        local parts = {}
+        local collision
+        for i,v in pairs(car:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if v.Parent == car.Body.HitBoxes and v.Name == "Collision" then collision = v end
+                table.insert(parts, v)
+            end
+        end
+        car.PrimaryPart.Velocity = Vector3.new(0,400,0)--car.PrimaryPart.CFrame.lookVector*1000*Vector3.new(1,0,1)
+        rF.BreakParts:InvokeServer(parts, collision, car.PrimaryPart.Velocity.Magnitude, "Default", car.PrimaryPart.Velocity, false)
+        wait()
+    end
+end
+
+function getClosestEntrance(part)
+    local target = nil
+    local maxDist = math.huge
+    for _,v in pairs(workspace.Building.Floor.CrusherDecoration:GetDescendants()) do
+        if v:IsA("MeshPart") and v.Name == "MeshPart" then
+            local dist = (part.Position - v.Position).Magnitude
+            if dist < maxDist then
+                maxDist = dist
+                target = v
+            end
+        end
+    end
+    return target
+end
+    
+function removeTags(chr)
+    local head = chr:WaitForChild("Head")
+    for _,v in pairs(head:GetChildren()) do
+        if v:IsA("BillboardGui") then v:Destroy() end
+    end
+end
+
+function escape(heli)
+    wait(1)
+    if heli.Name == "Helicopter" then
+        local chr = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hum = chr:WaitForChild("Humanoid")
+        local root = chr:WaitForChild("HumanoidRootPart") 
+        TP(heli:FindFirstChildOfClass("BasePart").Position)
+    end
+end
+
+local function TP(destination)
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return err("you are dead") end
+    local car = getCar()
+    local hum = LocalPlayer.Character:WaitForChild("Humanoid")
+    local root = hum.Sit and car and car.PrimaryPart or LocalPlayer.Character:FindFirstChild("HumanoidRootPart") 
+    if flags.tweentp.value then
+        speed = flags.tweenspeed.value
+        distance = (root.Position - destination).magnitude
+        time = distance/speed
+        tween = game:GetService("TweenService"):Create(root, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = CFrame.new(destination)})
+        tween:Play()
+        tween.Completed:Wait()
+    else
+        root.CFrame = CFrame.new(destination)
+    end
+end
+
+
+QEfly = true
+flyspeed = 1
+function sFLY(vfly)
+    local car = getCar()
+    if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
+    if vfly and not car then return end
+
+	local T = car.PrimaryPart
+	local CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+	local lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+	local SPEED = 0
+
+	local function FLY()
+		flags.flying(true)
+		local BG = Instance.new('BodyGyro')
+		local BV = Instance.new('BodyVelocity')
+		BG.P = 9e4
+		BG.Parent = T
+		BV.Parent = T
+		BG.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+		BG.cframe = T.CFrame
+		BV.velocity = Vector3.new(0, 0, 0)
+		BV.maxForce = Vector3.new(9e9, 9e9, 9e9)
+		spawn(function()
+			repeat wait()
+				if not vfly and Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+					Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = true
+				end
+				if CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0 then
+					SPEED = 50
+				elseif not (CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0) and SPEED ~= 0 then
+					SPEED = 0
+				end
+				if (CONTROL.L + CONTROL.R) ~= 0 or (CONTROL.F + CONTROL.B) ~= 0 or (CONTROL.Q + CONTROL.E) ~= 0 then
+					BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (CONTROL.F + CONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+					lCONTROL = {F = CONTROL.F, B = CONTROL.B, L = CONTROL.L, R = CONTROL.R}
+				elseif (CONTROL.L + CONTROL.R) == 0 and (CONTROL.F + CONTROL.B) == 0 and (CONTROL.Q + CONTROL.E) == 0 and SPEED ~= 0 then
+					BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (lCONTROL.F + lCONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+				else
+					BV.velocity = Vector3.new(0, 0, 0)
+				end
+				CurrentCamera.CameraSubject = car
+				BG.cframe = workspace.CurrentCamera.CoordinateFrame*CFrame.Angles(0,math.rad(180),0)
+			until not flags.flying.value
+			CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+			lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+			SPEED = 0
+			BG:Destroy()
+			BV:Destroy()
+			CurrentCamera.CameraSubject = LocalPlayer.Character
+			if LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+				LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
+			end
+		end)
+	end
+	flyKeyDown = Mouse.KeyDown:Connect(function(KEY)
+		if KEY:lower() == 'w' then
+			CONTROL.F = (vfly and flags.vflyspeed.value or flyspeed)
+		elseif KEY:lower() == 's' then
+			CONTROL.B = - (vfly and flags.vflyspeed.value or flyspeed)
+		elseif KEY:lower() == 'a' then
+			CONTROL.L = - (vfly and flags.vflyspeed.value or flyspeed)
+		elseif KEY:lower() == 'd' then 
+			CONTROL.R = (vfly and flags.vflyspeed.value or flyspeed)
+		elseif QEfly and KEY:lower() == 'e' then
+			CONTROL.Q = (vfly and flags.vflyspeed.value or flyspeed)*2
+		elseif QEfly and KEY:lower() == 'q' then
+			CONTROL.E = -(vfly and flags.vflyspeed.value or flyspeed)*2
+		end
+		pcall(function() CurrentCamera.CameraType = Enum.CameraType.Track end)
+	end)
+	flyKeyUp = Mouse.KeyUp:Connect(function(KEY)
+		if KEY:lower() == 'w' then
+			CONTROL.F = 0
+		elseif KEY:lower() == 's' then
+			CONTROL.B = 0
+		elseif KEY:lower() == 'a' then
+			CONTROL.L = 0
+		elseif KEY:lower() == 'd' then
+			CONTROL.R = 0
+		elseif KEY:lower() == 'e' then
+			CONTROL.Q = 0
+		elseif KEY:lower() == 'q' then
+			CONTROL.E = 0
+		end
+	end)
+	FLY()
+end
+
+function spawnFLY(collection)
+    wait(1)
+    if collection.Name == LocalPlayer.Character.Name then
+        local car = collection:WaitForChild("Car")
+        sFLY(true)
+    end
+end
+
+function NOFLY()
+	flags.flying(false)
+	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
+	if LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+		LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
+	end
+	pcall(function() CurrentCamera.CameraType = Enum.CameraType.Custom end)
+end
+
+function joindiscord()
+    if not syn then return err("synapse only") end
+    local json = {
+        ["cmd"] = "INVITE_BROWSER",
+            ["args"] = {
+            ["code"] = "DnyxZRwQh3"
+        },
+        ["nonce"] = 'a'
+        }
+    spawn(function()
+        print(syn.request({
+            Url = 'http://127.0.0.1:6463/rpc?v=1',
+            Method = 'POST',
+            Headers = {
+                ['Content-Type'] = 'application/json',
+                ['Origin'] = 'https://discord.com'
+              },
+            Body = game:GetService('HttpService'):JSONEncode(json),
+        }).Body)
+    end)
+end
+        
+LocalPlayer.Idled:connect(function()    --antiafk
+    if flags.autofarm.value then
+        VirtualUser:Button2Down(Vector2.new(0,0),CurrentCamera.CFrame)
+        wait(1)
+        VirtualUser:Button2Up(Vector2.new(0,0),CurrentCamera.CFrame)
+    end
+end)
+
+task.spawn(function()
+    while wait() do
+        if flags.autofarm.value then
+            local bestCar = getbestCar()
+            local car = getCar()
+            if not car then
+                rE.SaveCustoms:FireServer({
+	                ["BodyPaint"] = {
+		                ["Paint"] = {
+			                ["Material"] = flags.bodypaint.value
+		                }
+	                },
+	                ["Scraps"] = 100000
+                }, bestCar)
+                wait()
+                repeat 
+                    rF.SpawnVehicle:InvokeServer(bestCar)
+                    car = getCar()
+                    wait() 
+                until car ~= false or not flags.autofarm.value --until PlayerGui.VehicleMenu.Menu.Background.Background.RespawnLabel.Text == "Respawn vehicle [R]"
+            end
+            wait(1)
+            if not flags.autofarm.value then return end
+            if flags.silent.value then car:SetPrimaryPartCFrame(CFrame.new(5999.8056640625, 6.4365487098694, 2861.6376953125)) end
+            destroyCar()
+            wait(1)
+            rE.Delete:FireServer()
+        end
+    end
+end)
+
+local AccDir = 0
+RunService.Stepped:Connect(function()
+    local car = getCar()
+    if car then
+        if AccDir == 1 and flags.carspeed.value ~= 0 then
+            car.PrimaryPart.Velocity = CFrame.new(car.PrimaryPart.Velocity):Lerp(CFrame.new(-car.PrimaryPart.CFrame.lookVector*car.Parent.Speed.Value*(flags.carspeed.value)), 0.001).Position
+        end
+    end
+end)
+
+local OldNamecall
+OldNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
+    local args = {...} 
+    if not checkcaller() then 
+        if Self.Name == "BreakParts" and flags.invincible.value then return end
+        if Self.Name == "VehicleInfo" and args[1] == "AccDir" then AccDir = args[2] end
+    end
+    return OldNamecall(Self, unpack(args))
+end)
+
+--=======\UI\
+
+local window = library:CreateWindow("Hack Car Crushers 2             VIET HOA BY !THINHCT!", Vector2.new(450,330), Enum.KeyCode.RightShift)
+    local afTab = window:CreateTab("[Tu Dong Cay]")
+        local infoSec = afTab:CreateSector("Thong Tin")
+            local bestcarstring = "Xe dang su dung: "
+            bestcar_label = infoSec:AddLabel(bestcarstring)
+            task.spawn(function()
+                while wait() do
+                    local bestCar = getbestCar(true)
+                    bestcar_label:Set(bestcarstring..bestCar)
+                end
+            end)
+
+            local moneystring = "So Tien Da Nhan: "
+            moneymade_label = infoSec:AddLabel(moneystring.. "0")
+            task.spawn(function()
+                local moneymade = 0
+                while true do
+                    local money = LocalPlayer.Money
+                    local oldvalue = money.Value
+                    local value = money.Changed:Wait()
+                    moneymade = math.round(moneymade + (value - oldvalue))
+                    moneymade_label:Set(moneystring..moneymade)
+                end
+            end)
+            
+            local partsstring = "So Parts Da Nhan: "
+            partsmade_label = infoSec:AddLabel(partsstring.. "0")
+            task.spawn(function()
+                local partsmade = 0
+                while true do
+                    local parts = LocalPlayer.Parts
+                    local oldvalue = parts.Value
+                    local value = parts.Changed:Wait()
+                    partsmade = math.round(partsmade + (value - oldvalue))
+                    partsmade_label:Set(partsstring..partsmade)
+                end
+            end)
+            
+        local afSec = afTab:CreateSector("Cay Tu Dong", "right")
+            af_toggle = afSec:AddToggle("Bat/Tat", flags.autofarm.value, flags.autofarm)
+            silent_toggle = afSec:AddToggle("Cay Khong Bi Phat Hien", flags.silent.value, flags.silent)
+            paint_dropdown = afSec:AddDropdown("Mau Xe V.I.P", {"Neon", "Silver", "Gold", "Platinum"}, "Chon mau", flags.bodypaint)
+            
+        local amiscSec = afTab:CreateSector("Khac")
+            local escapeCon
+            ae_toggle = amiscSec:AddToggle("Tu Tron Thoat Khi Co Heli", false, function(bool) 
+                if bool then 
+                    local heli = HelicopterContainer:FindFirstChild("Helicopter")
+                    if heli then escape(heli) end 
+                    escapeCon = HelicopterContainer.ChildAdded:Connect(escape) 
+                else 
+                    if escapeCon then escapeCon:Disconnect() end 
+                end
+            end)
+    
+    
+    local vTab = window:CreateTab("[Xe]")
+        local flySec = vTab:CreateSector("Bay"); local flyCon
+            vfly_toggle = flySec:AddToggle("Bat/Tat", flags.invincible.value, function(b) 
+                if flyCon then flyCon:Disconnect() end
+                if b then
+                    flyCon = CarCollection.ChildAdded:Connect(spawnFLY)
+                    sFLY(true)
+                else
+                    NOFLY()
+                end
+            end)
+            vfly_toggle:AddKeybind()
+            vflyspeed_slider = flySec:AddSlider("Toc Do", 1, flags.vflyspeed.value, 100, 1, flags.vflyspeed)
+            
+        local speedSec = vTab:CreateSector("Chay Nhanh", 'right')
+            carspeed_slider = speedSec:AddSlider("Toc Do", 0, flags.carspeed.value, 50, 1, flags.carspeed)
+            
+        local boostSec = vTab:CreateSector("Xe Chay Nhanh")
+            boost_keybind = boostSec:AddKeybind("Phim tat",Enum.KeyCode.C, nil, boost)
+            boostspeed_slider = boostSec:AddSlider("Amount", 1, flags.boostspeed.value, 200, 1, flags.boostspeed)
+            
+        local jumpSec = vTab:CreateSector("Nhay Cao", 'right')
+            jump_toggle = jumpSec:AddToggle("Bat/Tat", flags.jump.value, flags.jump)
+            jump_keybind = jumpSec:AddKeybind("Phim Tat",Enum.KeyCode.G, nil, jump)
+            jumppower_slider = jumpSec:AddSlider("Amount", 0, flags.jumppower.value, 50, 1, flags.jumppower)
+            
+        local miscSec = vTab:CreateSector("Khac")
+            invincible_toggle = miscSec:AddToggle("=Khong Hong Xe", flags.invincible.value, flags.invincible)
+            spawn_button = miscSec:AddButton("Trieu Hoi Xe", spawnCar)
+            bring_button = miscSec:AddButton("Mang Xe Den", bringCar)
+            destroy_button = miscSec:AddButton("Pha Huy Xe", destroyCar)
+            
+            
+    local miscTab = window:CreateTab("[Khac]")
+        local teleSec = miscTab:CreateSector("Dich Chuyen", "right")
+            tpspawn_button = teleSec:AddButton("Trieu Hoi", function() rF.TeleportPlr:InvokeServer("LobbySpawn") end)
+            if workspace:FindFirstChild("Crusher Parts") then
+                local teleports = {}
+                local tpNames = {}
+                for _,v in pairs(workspace["Crusher Parts"]:GetChildren()) do
+                    teleports[v.Name] = v.Entrance:FindFirstChildOfClass("Part")
+                    table.insert(tpNames, v.Name)
+                end
+                tp_dropdown = teleSec:AddDropdown("Khu Pha Huy Xe", tpNames, "Lua chon", function(c) 
+                    local entrance = getClosestEntrance(teleports[c])
+                    if not entrance then return err("no entrance?") end
+                    TP(entrance.Position)
+                end)
+            end
+            teleSec:AddLabel("CAI DAT")
+            tweentp_toggle = teleSec:AddToggle("Tween/Chua Biet Dich Sr Ae", flags.tweentp.value, flags.tweentp)
+            tweenspeed_slider = teleSec:AddSlider("Toc Do Tween", 1, flags.tweenspeed.value, 1000, 1, flags.tweenspeed)
+            
+        local charSec = miscTab:CreateSector("Nhan Vat", "right")
+            charSec:AddLabel("Xoa Title Name")
+            local removeCon
+            removeTags_button = charSec:AddToggle("Bat/Tat", false, function(bool) 
+                if bool then 
+                    removeTags(LocalPlayer.Character) 
+                    removeCon = LocalPlayer.CharacterAdded:Connect(removeTags) 
+                else 
+                    if removeCon then removeCon:Disconnect() end 
+                end 
+            end)
+            
+        local serverSector = miscTab:CreateSector("Servers")
+            rejoin_button = serverSector:AddButton("Vao Lai Game", function()
+                if #Players:GetPlayers() <= 1 then
+	    	        Players.LocalPlayer:Kick("\nRejoining...")
+	    	        wait()
+        		    game:GetService('TeleportService'):Teleport(game.PlaceId, Players.LocalPlayer)
+        	    else
+        		    game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
+        	    end
+            end)
+            smallest_button = serverSector:AddButton("Vao Server It Nguoi", function()
+                if syn then 
+                    coroutine.resume(coroutine.create(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/saucekid/scripts/main/JoinLowestPlayer.lua"))()  end))
+                else
+                    err("Xin loi, chuc nang chi danh cho free ex")
+                end
+            end)
+            serverhop_button = serverSector:AddButton("Vao Server Nhieu Nguoi", function()
+                local x = {}
+	                for _, v in ipairs(game:GetService("HttpService"):JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data) do
+         		if type(v) == "table" and v.maxPlayers > v.playing and v.id ~= game.JobId then
+            			x[#x + 1] = v.id
+            		end
+            	end
+            	if #x > 0 then
+            		game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, x[math.random(1, #x)])
+            	else
+            		return notify("Khong the tim server")
+            	end
+            end)    
+            
+        local discSector = miscTab:CreateSector("Discord")
+            joindisc_button = discSector:AddButton("Duong Dan Discord", joindiscord)
+            copydisc_button = discSector:AddButton("Copy link Discord", function() if setclipboard then setclipboard('https://discord.gg/DnyxZRwQh3') else print("DnyxZRwQh3") end end)
+                
+        local changeSector = miscTab:CreateSector("Lua Chon")
+            changeSector:AddLabel("• Xe bay")
+            changeSector:AddLabel("• Xe nhay")         
+            changeSector:AddLabel("• Toc do xe")
+            changeSector:AddLabel("• Chinh mau xe")
+        
+    
